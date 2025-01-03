@@ -18,10 +18,10 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "ARGB.h"
+
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "ARGB.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -99,6 +99,7 @@ int main(void)
 
   ARGB_SetBrightness(100);  // Set global brightness to 40%
 
+  int button_curent_state = 0;
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -108,13 +109,17 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    for (uint8_t i = 0; i < NUM_PIXELS; i++){
-      ARGB_Clear();
-      while (!ARGB_Show());
-      ARGB_SetRGB(i,255, 255, 255);
-      while (!ARGB_Show());
-      HAL_Delay(50);
+	button_curent_state=HAL_GPIO_ReadPin(BUTTON_GPIO_Port, BUTTON_Pin);
+    if (button_curent_state!=0){
+	  for (uint8_t i = 0; i < NUM_PIXELS; i++){
+  		ARGB_Clear();
+  		while (!ARGB_Show());
+  		ARGB_SetRGB(i,255, 255, 255);
+  		while (!ARGB_Show());
+  		HAL_Delay(50);
+	  }
     }
+
   }
   /* USER CODE END 3 */
 }
@@ -230,6 +235,7 @@ static void MX_DMA_Init(void)
   */
 static void MX_GPIO_Init(void)
 {
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
 /* USER CODE BEGIN MX_GPIO_Init_1 */
 /* USER CODE END MX_GPIO_Init_1 */
 
@@ -237,6 +243,12 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
+
+  /*Configure GPIO pin : BUTTON_Pin */
+  GPIO_InitStruct.Pin = BUTTON_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+  HAL_GPIO_Init(BUTTON_GPIO_Port, &GPIO_InitStruct);
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */

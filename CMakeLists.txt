@@ -53,7 +53,7 @@ include_directories(Core/Inc Drivers/STM32F1xx_HAL_Driver/Inc/Legacy Drivers/STM
 
 add_definitions(-DDEBUG -DUSE_HAL_DRIVER -DSTM32F103x6)
 
-file(GLOB_RECURSE SOURCES "Core/*.*" "Drivers/*.*" "Lib/*.*")
+file(GLOB_RECURSE SOURCES "Lib/*.*" "Core/*.*" "Drivers/*.*")
 
 set(LINKER_SCRIPT ${CMAKE_SOURCE_DIR}/STM32F103C6TX_FLASH.ld)
 
