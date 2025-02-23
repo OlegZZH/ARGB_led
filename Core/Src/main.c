@@ -97,9 +97,23 @@ int main(void)
   ARGB_Clear(); // Clear stirp
   while (!ARGB_Show());
 
-  ARGB_SetBrightness(100);  // Set global brightness to 40%
 
   int button_curent_state = 0;
+  int button_color_state =0;
+  int button_brightness_state =0;
+
+  ARGB_MODE current_MODE = STATIC;
+  int color_R = 255;
+  int color_G = 255;
+  int color_B = 255;
+  int brightness = 100;
+  int brightness_direction = 1;
+  int brightness_step =2;
+
+
+  ARGB_SetBrightness(brightness);  // Set global brightness to 40%
+
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -109,16 +123,92 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	button_curent_state=HAL_GPIO_ReadPin(BUTTON_GPIO_Port, BUTTON_Pin);
-    if (button_curent_state!=0){
-	  for (uint8_t i = 0; i < NUM_PIXELS; i++){
-  		ARGB_Clear();
-  		while (!ARGB_Show());
-  		ARGB_SetRGB(i,255, 255, 255);
-  		while (!ARGB_Show());
-  		HAL_Delay(50);
-	  }
-    }
+	button_curent_state=HAL_GPIO_ReadPin(MODE_BUTTON_GPIO_Port, MODE_BUTTON_Pin);
+	button_color_state=HAL_GPIO_ReadPin(COLOR_BUTTON_GPIO_Port, COLOR_BUTTON_Pin);
+	button_brightness_state=HAL_GPIO_ReadPin(BRIGHTNESS_BUTTON_GPIO_Port, BRIGHTNESS_BUTTON_Pin);
+
+
+	if (button_curent_state){
+		if (current_MODE < ITERATION) {
+		    current_MODE++;
+		}
+		else{
+			current_MODE=0;
+		}
+		HAL_Delay(300);
+	}else if (button_color_state){
+		ARGB_Clear();
+		while (!ARGB_Show());
+		calculateRainbowColor(&color_R, &color_G, &color_B);
+		ARGB_FillRGB(color_R, color_G, color_B);
+		while (!ARGB_Show());
+	}else if (button_brightness_state){
+		ARGB_Clear();
+		while (!ARGB_Show());
+        brightness += brightness_step * brightness_direction;
+
+        if (brightness >= 100) {
+            brightness = 100;
+            brightness_direction = -1;
+        } else if (brightness <= 0) {
+            brightness = 0;
+            brightness_direction = 1;
+        }
+		ARGB_SetBrightness(brightness);
+		ARGB_FillRGB(color_R, color_G, color_B);
+		while (!ARGB_Show());
+	}else{
+
+		switch(current_MODE){
+		case STATIC:
+			ARGB_Clear();
+			while (!ARGB_Show());
+			ARGB_FillRGB(color_R, color_G, color_B);
+			while (!ARGB_Show());
+			break;
+		case RAINBOW:
+			ARGB_Clear();
+			while (!ARGB_Show());
+			calculateRainbowColor(&color_R, &color_G, &color_B);
+			ARGB_FillRGB(color_R, color_G, color_B);
+			while (!ARGB_Show());
+			break;
+		case SLOW_BLINK:
+			ARGB_Clear();
+			while (!ARGB_Show());
+            brightness += brightness_step * brightness_direction;
+
+            if (brightness >= 100) {
+                brightness = 100;
+                brightness_direction = -1;
+            } else if (brightness <= 0) {
+                brightness = 0;
+                brightness_direction = 1;
+            }
+			ARGB_SetBrightness(brightness);
+			ARGB_FillRGB(color_R, color_G, color_B);
+			while (!ARGB_Show());
+			break;
+		case ITERATION:
+			for (uint8_t i = 0; i < NUM_PIXELS; i++){
+				button_curent_state=HAL_GPIO_ReadPin(MODE_BUTTON_GPIO_Port, MODE_BUTTON_Pin);
+				button_color_state=HAL_GPIO_ReadPin(COLOR_BUTTON_GPIO_Port, COLOR_BUTTON_Pin);
+				button_brightness_state=HAL_GPIO_ReadPin(BRIGHTNESS_BUTTON_GPIO_Port, BRIGHTNESS_BUTTON_Pin);
+				if (button_curent_state || button_color_state || button_brightness_state){
+					break;
+				}
+				ARGB_Clear();
+			  	while (!ARGB_Show());
+			  	ARGB_SetRGB(i,color_R, color_G, color_B);
+			  	while (!ARGB_Show());
+			  	HAL_Delay(100);
+			}
+			break;
+		}
+	}
+
+
+	HAL_Delay(50);
 
   }
   /* USER CODE END 3 */
@@ -244,17 +334,66 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
 
-  /*Configure GPIO pin : BUTTON_Pin */
-  GPIO_InitStruct.Pin = BUTTON_Pin;
+  /*Configure GPIO pins : BRIGHTNESS_BUTTON_Pin COLOR_BUTTON_Pin MODE_BUTTON_Pin */
+  GPIO_InitStruct.Pin = BRIGHTNESS_BUTTON_Pin|COLOR_BUTTON_Pin|MODE_BUTTON_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLDOWN;
-  HAL_GPIO_Init(BUTTON_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */
 }
 
 /* USER CODE BEGIN 4 */
+void calculateRainbowColor(int *color_R, int *color_G, int *color_B) {
+    static int color_mode = 0;
+    static int step = 5;
+
+    switch (color_mode) {
+    case 0: // Red to Yellow (Increase Green)
+		*color_G += 5;
+		if (*color_G >= 255) {
+			*color_G = 255;
+			color_mode = 1;
+		}
+		break;
+	case 1: // Yellow to Green (Decrease Red)
+		*color_R -= 5;
+		if (*color_R <= 0) {
+			*color_R = 0;
+			color_mode = 2;
+		}
+		break;
+	case 2: // Green to Cyan (Increase Blue)
+		*color_B += 5;
+		if (*color_B >= 255) {
+			*color_B = 255;
+			color_mode = 3;
+		}
+		break;
+	case 3: // Cyan to Blue (Decrease Green)
+		*color_G -= 5;
+		if (*color_G <= 0) {
+			*color_G = 0;
+			color_mode = 4;
+		}
+		break;
+	case 4: // Blue to Magenta (Increase Red)
+		*color_R += 5;
+		if (*color_R >= 255) {
+			*color_R = 255;
+			color_mode = 5;
+		}
+		break;
+	case 5: // Magenta to Red (Decrease Blue)
+		*color_B -= 5;
+		if (*color_B <= 0) {
+			*color_B = 0;
+			color_mode = 0;
+		}
+		break;
+    }
+}
 
 /* USER CODE END 4 */
 

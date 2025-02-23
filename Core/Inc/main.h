@@ -36,7 +36,12 @@ extern "C" {
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
-
+typedef enum ARGB_MODE {
+    STATIC = 0,
+    RAINBOW = 1,
+    SLOW_BLINK = 2,
+    ITERATION = 3,
+} ARGB_MODE;
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
@@ -55,12 +60,16 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
 void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
-
+void calculateRainbowColor(int *R, int *G, int *B);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define BUTTON_Pin GPIO_PIN_9
-#define BUTTON_GPIO_Port GPIOB
+#define BRIGHTNESS_BUTTON_Pin GPIO_PIN_7
+#define BRIGHTNESS_BUTTON_GPIO_Port GPIOB
+#define COLOR_BUTTON_Pin GPIO_PIN_8
+#define COLOR_BUTTON_GPIO_Port GPIOB
+#define MODE_BUTTON_Pin GPIO_PIN_9
+#define MODE_BUTTON_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 
